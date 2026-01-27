@@ -1,22 +1,25 @@
-from handlers import (
-    CleanTextHandler,
-    DropDuplicatesHandler,
-    DropEmptySalaryHandler,
-)
-from io_utils import read_csv, save_npy
+"""
+Pipeline orchestration module.
+"""
+
+import numpy as np
+import pandas as pd
+
 from features import build_xy
 
 
 def run_pipeline(csv_path: str) -> None:
-    df = read_csv(csv_path)
+    """
+    Run full data processing pipeline.
 
-    pipeline = (
-        CleanTextHandler()
-        .set_next(DropDuplicatesHandler())
-        .set_next(DropEmptySalaryHandler())
-    )
+    Parameters
+    ----------
+    csv_path : str
+        Path to input CSV file.
+    """
+    dataframe = pd.read_csv(csv_path)
 
-    df = pipeline.handle(df)
+    features, target = build_xy(dataframe)
 
-    x, y = build_xy(df)
-    save_npy(csv_path, x, y)
+    np.save("x_data.npy", features)
+    np.save("y_data.npy", target)
