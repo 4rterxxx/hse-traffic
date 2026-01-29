@@ -28,11 +28,15 @@ class CleanTextHandler(Handler):
     """Remove non-breaking spaces and trim strings."""
 
     def _process(self, df: pd.DataFrame) -> pd.DataFrame:
-        return df.applymap(
-            lambda x: re.sub(r"[\u00a0\u200b\ufeff]", " ", x).strip()
-            if isinstance(x, str)
-            else x
-        )
+        # Используем apply с lambda для каждого столбца
+        result = df.copy()
+        for col in result.columns:
+            if result[col].dtype == 'object':  # только строковые колонки
+                result[col] = result[col].apply(
+                    lambda x: re.sub(r"[\u00a0\u200b\ufeff]", " ", str(x)).strip()
+                    if pd.notna(x) else x
+                )
+        return result
 
 
 class DropDuplicatesHandler(Handler):

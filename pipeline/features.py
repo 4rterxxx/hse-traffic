@@ -29,10 +29,12 @@ def _parse_salary(series: pd.Series) -> pd.Series:
     pd.Series
         Parsed salary values as integers.
     """
+    # Исправляем: сначала преобразуем в строку, потом чистим
     return (
         series.astype(str)
         .str.replace(r"[^\d]", "", regex=True)
         .replace("", pd.NA)
+        .replace("nan", pd.NA)
         .astype("Int64")
     )
 
@@ -43,57 +45,63 @@ def _parse_gender(series: pd.Series) -> pd.Series:
 
     Returns 1 for male, 0 otherwise.
     """
-    return series.str.contains("Мужчина", na=False).astype(int)
+    return series.fillna('').astype(str).str.contains("Мужчина", na=False).astype(int)
 
 
 def _parse_age(series: pd.Series) -> pd.Series:
     """
     Extract age in years from text.
     """
-    return series.str.extract(r"(\d+)\s*год")[0].astype("Int64")
+    # Заполняем пропуски пустой строкой
+    series_filled = series.fillna('')
+    extracted = series_filled.astype(str).str.extract(r"(\d+)\s*год")[0]
+    return extracted.replace('', pd.NA).astype("Int64")
 
 
 def _parse_city(series: pd.Series) -> pd.Series:
     """
     Encode city names as categorical integer codes.
     """
-    return series.str.split(",").str[0].astype("category").cat.codes
+    # Безопасное извлечение первого элемента
+    cities = series.fillna('').astype(str).str.split(",").str[0].str.strip()
+    cities = cities.replace('', 'Unknown')
+    return pd.Categorical(cities).codes
 
 
 def _parse_full_time(series: pd.Series) -> pd.Series:
     """
     Detect full-time employment.
     """
-    return series.str.contains("полная", case=False, na=False).astype(int)
+    return series.fillna('').astype(str).str.contains("полная", case=False, na=False).astype(int)
 
 
 def _parse_has_car(series: pd.Series) -> pd.Series:
     """
     Detect whether the candidate has a car.
     """
-    return series.str.contains("автомоб", case=False, na=False).astype(int)
+    return series.fillna('').astype(str).str.contains("автомоб", case=False, na=False).astype(int)
 
 
 def _parse_higher_education(series: pd.Series) -> pd.Series:
     """
     Detect presence of higher education.
     """
-    return series.str.contains("Высшее", case=False, na=False).astype(int)
+    return series.fillna('').astype(str).str.contains("Высшее", case=False, na=False).astype(int)
 
 
 def _parse_remote(series: pd.Series) -> pd.Series:
     """
     Detect remote work option.
     """
-    return series.str.contains("удален", case=False, na=False).astype(int)
+    return series.fillna('').astype(str).str.contains("удален", case=False, na=False).astype(int)
 
 
 def _parse_experience_years(series: pd.Series) -> pd.Series:
     """
     Extract total work experience in years.
     """
-    years = series.str.extract(r"(\d+)\s*лет")[0]
-    return years.astype("Int64")
+    years = series.fillna('').astype(str).str.extract(r"(\d+)\s*лет")[0]
+    return years.replace('', pd.NA).astype("Int64")
 
 
 def _get_experience_column(df: pd.DataFrame) -> pd.Series:
@@ -129,8 +137,17 @@ def build_xy(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
         X - feature matrix
         y - target vector (salary)
     """
+    # Проверяем наличие необходимых колонок
+    required_cols = ["ЗП", "Пол, возраст", "Город", "Занятость", "Авто", "Образование и ВУЗ", "График"]
+    missing_cols = [col for col in required_cols if col not in df.columns]
+    
+    if missing_cols:
+        print(f"Предупреждение: отсутствуют колонки: {missing_cols}")
+        # Возвращаем пустые массивы
+        return np.array([]), np.array([])
+    
     y = _parse_salary(df["ЗП"])
-
+    
     experience_series = _get_experience_column(df)
 
     X = pd.DataFrame({
@@ -145,6 +162,11 @@ def build_xy(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
     })
 
     mask = y.notna()
+
+    # Если нет данных после фильтрации
+    if mask.sum() == 0:
+        print("Предупреждение: нет данных с указанной зарплатой")
+        return np.array([]), np.array([])
 
     X = X[mask].fillna(0)
     y = y[mask]
