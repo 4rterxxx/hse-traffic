@@ -1,31 +1,38 @@
 import numpy as np
 import os
+import pickle
 
 
 def load_trained_model():
-    weights_path = "resources/model_weights.npy"
-    scaler_path = "resources/scaler_params.npy"
+    model_type_path = "resources/model_type.npy"
     
-    if not os.path.exists(weights_path):
-        raise FileNotFoundError(f"Файл не найден: {weights_path}")
+    if not os.path.exists(model_type_path):
+        raise FileNotFoundError("Модель не найдена. Сначала обучите модель.")
     
-    weights = np.load(weights_path)
-    scaler_params = np.load(scaler_path, allow_pickle=True).item()
+    model_type = np.load(model_type_path, allow_pickle=True)[0]
     
-    from .linear_reg import SalaryModel
-    model = SalaryModel(
-        alpha=scaler_params.get('alpha', 1.0),
-        normalize=scaler_params.get('normalize', True),
-        degree=scaler_params.get('degree', 1)
-    )
+    from .linear_reg import LinearRegression, SalaryModel
     
-    model.weights = weights
-    model.X_mean = scaler_params['X_mean']
-    model.X_std = scaler_params['X_std']
-    model.y_mean = scaler_params['y_mean']
-    model.y_std = scaler_params['y_std']
-    
-    return model
+    if model_type == "linear":
+        model = LinearRegression()
+        
+        weights = np.load("resources/model_weights.npy")
+        scaler_params = np.load("resources/scaler_params.npy", allow_pickle=True).item()
+        
+        model.weights = weights
+        model.X_mean = scaler_params['X_mean']
+        model.X_std = scaler_params['X_std']
+        model.y_mean = scaler_params['y_mean']
+        model.y_std = scaler_params['y_std']
+        model.alpha = scaler_params.get('alpha', 1.0)
+        model.degree = scaler_params.get('degree', 1)
+        model.normalize = scaler_params.get('normalize', True)
+        
+        return model
+    else:
+        with open("resources/model.pkl", "rb") as f:
+            model = pickle.load(f)
+        return model
 
 
 def predict_salaries(x_path):
