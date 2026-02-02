@@ -1,30 +1,78 @@
 from pathlib import Path
+from typing import Optional
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 def read_csv(path: str) -> pd.DataFrame:
+    """Загрузка CSV файла.
+
+    Parameters
+    ----------
+    path : str
+        Путь к CSV файлу
+
+    Returns
+    -------
+    pd.DataFrame
+        Загруженный DataFrame
+
+    Raises
+    ------
+    FileNotFoundError
+        Если файл не найден
+    ValueError
+        Если файл некорректен
+    """
+    if not Path(path).exists():
+        raise FileNotFoundError(f"Файл не найден: {path}")
+
     try:
         df = pd.read_csv(path, low_memory=False)
         print(f"Успешно загружено: {len(df)} строк")
         return df
+    except pd.errors.EmptyDataError:
+        raise ValueError("Файл пуст")
+    except pd.errors.ParserError as e:
+        raise ValueError(f"Ошибка парсинга CSV: {e}")
     except Exception as e:
-        print(f"Ошибка загрузки CSV: {e}")
-        raise
+        raise ValueError(f"Ошибка загрузки CSV: {e}")
 
 
-def save_npy(csv_path: str, x: np.ndarray, y: np.ndarray) -> None:
+def save_npy(
+    csv_path: str, x: np.ndarray, y: np.ndarray, x_suffix: str = "x_data.npy"
+) -> None:
+    """Сохранение данных в формате .npy.
+
+    Parameters
+    ----------
+    csv_path : str
+        Исходный путь к CSV файлу (для определения директории)
+    x : np.ndarray
+        Матрица признаков
+    y : np.ndarray
+        Вектор целевой переменной
+    x_suffix : str, optional
+        Суффикс для файла X, по умолчанию "x_data.npy"
+
+    Raises
+    ------
+    ValueError
+        Если данные пусты
+    """
+    if x.size == 0 or y.size == 0:
+        raise ValueError("Пустые данные для сохранения")
+
     try:
         base_dir = Path(csv_path).parent
-        x_path = base_dir / "x_data.npy"
+        x_path = base_dir / x_suffix
         y_path = base_dir / "y_data.npy"
-        
+
         np.save(str(x_path), x)
         np.save(str(y_path), y)
-        
+
         print(f"Сохранено: {x_path}")
         print(f"Сохранено: {y_path}")
     except Exception as e:
-        print(f"Ошибка сохранения .npy файлов: {e}")
-        raise
+        raise ValueError(f"Ошибка сохранения .npy файлов: {e}")
