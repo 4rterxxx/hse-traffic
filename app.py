@@ -64,7 +64,7 @@ def main():
         print(f"Обучение модели...")
         
         try:
-            from model.trainer import train_and_save_model
+            from hh_regression.trainer import train_and_save_model
             train_and_save_model(x_path, y_path)
             print("Модель обучена и сохранена")
         except Exception as e:
@@ -89,7 +89,7 @@ def main():
         print(f"Предсказание зарплат...")
         
         try:
-            from model.predictor import predict_salaries
+            from hh_regression.predictor import predict_salaries
             salaries = predict_salaries(x_path)
             
             for salary in salaries:
