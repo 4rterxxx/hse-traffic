@@ -9,14 +9,17 @@ import os
 
 def print_help():
     print("Использование:")
-    print("  Обработка данных: python app.py process <hh.csv>")
-    print("  Обучение модели: python app.py train <x.npy> <y.npy>")
-    print("  Предсказание:    python app.py predict <x.npy>")
+    print("  Обработка данных:   python app.py process <hh.csv>")
+    print("  Обучение модели:    python app.py train <x.npy> <y.npy>")
+    print("  Предсказание:       python app.py predict <x.npy>")
+    print("  Классификация IT:   python app.py classify <hh.csv> [output_dir]")
     print()
     print("Примеры:")
     print("  python app.py process hh.csv")
     print("  python app.py train x_data.npy y_data.npy")
     print("  python app.py predict x_data.npy")
+    print("  python app.py classify hh.csv")
+    print("  python app.py classify hh.csv my_results")
 
 
 def main():
@@ -94,6 +97,33 @@ def main():
             
         except Exception as e:
             print(f"Ошибка предсказания: {e}")
+            sys.exit(1)
+    
+    elif command == "classify":
+        """Классификация IT-разработчиков"""
+        if len(sys.argv) < 3:
+            print("Ошибка: укажите путь к CSV файлу")
+            sys.exit(1)
+        
+        csv_path = sys.argv[2]
+        output_dir = sys.argv[3] if len(sys.argv) > 3 else "hh_results"
+        
+        if not os.path.exists(csv_path):
+            print(f"Файл не найден: {csv_path}")
+            sys.exit(1)
+        
+        print(f"Классификация IT-разработчиков из файла: {csv_path}")
+        print(f"Результаты будут сохранены в папке: {output_dir}")
+        print()
+        
+        try:
+            from hh_classification.main import run_pipeline
+            run_pipeline(data_path=csv_path, output_dir=output_dir)
+        except ImportError:
+            print("Модуль классификации не найден. Проверьте наличие папки hh_classification/")
+            sys.exit(1)
+        except Exception as e:
+            print(f"Ошибка классификации: {e}")
             sys.exit(1)
     
     elif command in ["help", "--help", "-h"]:

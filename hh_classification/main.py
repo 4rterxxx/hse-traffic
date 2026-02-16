@@ -21,24 +21,20 @@ def run_pipeline(data_path: str, output_dir: str = "results"):
     print("Классификация уровня IT-разработчиков")
     print("--------------------------------------")
     
-    # 1. Загрузка и фильтрация
     print("\n1. Загрузка данных")
     loader = DataLoader()
     raw_data = loader.load_data(data_path)
     filtered_data, position_col = loader.filter_it(raw_data)
     
-    # 2. Предобработка
     print("2. Предобработка")
     processed_data = loader.preprocess(filtered_data, position_col)
     
-    # 3. Создание целевой переменной
     print("3. Создание целевой переменной")
     target_builder = TargetBuilder()
     labeled_data = target_builder.create_target(processed_data)
     
     labeled_data.to_csv(os.path.join(output_dir, "labeled_resumes.csv"), index=False)
     
-    # 4. Извлечение признаков
     print("4. Извлечение признаков")
     feature_extractor = FeatureExtractor()
     X = feature_extractor.extract_basic_features(labeled_data)
@@ -46,16 +42,13 @@ def run_pipeline(data_path: str, output_dir: str = "results"):
     
     plot_class_distribution(y, save_path=os.path.join(output_dir, "class_distribution.png"))
     
-    # 5. Подготовка данных
     print("5. Подготовка данных")
     X_prepared, y_prepared = feature_extractor.prepare_for_training(X, y)
     
-    # 6. Обучение модели
     print("6. Обучение модели")
     model = Model(random_state=42)
     X_train, X_test, y_train, y_test, y_pred = model.train(X_prepared, y_prepared)
     
-    # 7. Визуализация результатов
     print("7. Визуализация результатов")
     model.plot_results(
         y_test, y_pred, 
@@ -63,13 +56,11 @@ def run_pipeline(data_path: str, output_dir: str = "results"):
         save_path=os.path.join(output_dir, "model_results.png")
     )
     
-    # 8. Сохранение важных признаков
     if model.feature_importance is not None:
         importance_path = os.path.join(output_dir, "feature_importance.csv")
         model.feature_importance.to_csv(importance_path, index=False)
         print(f"\nВажность признаков сохранена: {importance_path}")
     
-    # 9. Итоговый отчет
     print("\n" + "-" * 40)
     print("ИТОГОВЫЙ ОТЧЕТ")
     print("-" * 40)
