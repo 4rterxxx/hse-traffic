@@ -76,3 +76,48 @@ def save_npy(
         print(f"Сохранено: {y_path}")
     except Exception as e:
         raise ValueError(f"Ошибка сохранения .npy файлов: {e}")
+
+def save_classification_data(
+    csv_path: str, 
+    X: np.ndarray, 
+    y: np.ndarray,
+    x_suffix: str = "x_class.npy",
+    y_suffix: str = "y_class.npy"
+) -> None:
+    """
+    Сохранение данных для классификации в формате .npy.
+    
+    Parameters
+    ----------
+    csv_path : str
+        Исходный путь к CSV файлу (для определения директории)
+    X : np.ndarray
+        Матрица признаков
+    y : np.ndarray
+        Вектор меток классов
+    x_suffix : str, optional
+        Суффикс для файла X, по умолчанию "x_class.npy"
+    y_suffix : str, optional
+        Суффикс для файла Y, по умолчанию "y_class.npy"
+        
+    Raises
+    ------
+    ValueError
+        Если данные пусты
+    """
+    if X.size == 0 or y.size == 0:
+        raise ValueError("Пустые данные для сохранения")
+    
+    try:
+        base_dir = Path(csv_path).parent
+        x_path = base_dir / x_suffix
+        y_path = base_dir / y_suffix
+        
+        np.save(str(x_path), X)
+        np.save(str(y_path), y)
+        
+        print(f"Сохранено: {x_path}")
+        print(f"Сохранено: {y_path}")
+        print(f"Размерность X: {X.shape}, y: {y.shape}")
+    except Exception as e:
+        raise ValueError(f"Ошибка сохранения .npy файлов: {e}")
